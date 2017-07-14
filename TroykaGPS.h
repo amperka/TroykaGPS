@@ -9,6 +9,7 @@
 #define GPS_ERROR_DATA   -1
 #define GPS_ERROR_SAT    -2
 
+#define KNOT_TO_KM        1.852
 class GPS
 {
 
@@ -16,7 +17,8 @@ public:
     GPS(Stream& serial);
     int8_t getData();
     int8_t getSat() const { return _sat; }
-    float getSpeed() const { return _speed; }
+    float getSpeedKn() const { return _speed; }
+    float getSpeedKm() const { return _speed * KNOT_TO_KM; }
     float getAltitude() const { return _altitude; }
     float getLatitudeBase10() const { return _latitudeBase10; }
     float getLongitudeBase10() const { return _longitudeBase10; }

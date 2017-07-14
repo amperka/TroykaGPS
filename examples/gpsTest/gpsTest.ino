@@ -51,7 +51,7 @@ void loop()
       Serial.println(gps.getSat());
       // выводим текущую скорость
       Serial.print("Speed: ");
-      Serial.println(gps.getSpeed());
+      Serial.println(gps.getSpeedKm());
       // выводим высоту над уровнем моря
       Serial.print("Altitude: ");
       Serial.println(gps.getAltitude());
