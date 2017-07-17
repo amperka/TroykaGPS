@@ -343,20 +343,20 @@ bool GPS::readData(char* gpsConnectSat, char* time, char* date, char* latitude, 
     return true;
 }
 
-void GPS::getLatitudeBase60(char* latitudeBase60) const {
-    strcpy(latitudeBase60, _latitudeBase60);
+void GPS::getLatitudeBase60(char* latitudeBase60, size_t maxLength) const {
+    strncpy(latitudeBase60, _latitudeBase60, maxLength);
 }
 
-void GPS::getLongitudeBase60(char* longitudeBase60) const {
-    strcpy(longitudeBase60, _longitudeBase60);
+void GPS::getLongitudeBase60(char* longitudeBase60, size_t maxLength) const {
+    strncpy(longitudeBase60, _longitudeBase60, maxLength);
 }
 
-void GPS::getTime(char* time) const {
-    strcpy(time, _time);
+void GPS::getTime(char* time, size_t maxLength) const {
+    strncpy(time, _time, maxLength);
 }
 
-void GPS::getDate(char* date) const {
-    strcpy(date, _date);
+void GPS::getDate(char* date, size_t maxLength) const {
+    strncpy(date, _date, maxLength);
 }
 
 int GPS::available() {

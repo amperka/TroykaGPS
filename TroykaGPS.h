@@ -22,10 +22,10 @@ public:
     float getAltitude() const { return _altitude; }
     float getLatitudeBase10() const { return _latitudeBase10; }
     float getLongitudeBase10() const { return _longitudeBase10; }
-    void getLatitudeBase60(char* latitudeBase60) const;
-    void getLongitudeBase60(char* longitudeBase60) const;
-    void getTime(char* time) const;
-    void getDate(char* date) const;
+    void getLatitudeBase60(char* latitudeBase60, size_t maxLength) const;
+    void getLongitudeBase60(char* longitudeBase60, size_t maxLength) const;
+    void getTime(char* time, size_t maxLength) const;
+    void getDate(char* date, size_t maxLength) const;
     int8_t getSecond() const { return _second; }
     int8_t getMinute() const { return _minute; }
     int8_t getHour() const { return _hour; }

@@ -2,15 +2,16 @@
 #include <TroykaGPS.h>
 // создаём объект класса GPS и передаём в него объект Serial1 
 GPS gps(Serial1);
-
+// задаём размер массива для времени, даты, широты и долготы
+#define MAX_SIZE_MASS 16
 // массив для хранения текущего времени
-char time[16];
+char time[MAX_SIZE_MASS];
 // массив для хранения текущей даты
-char date[16];
+char date[MAX_SIZE_MASS];
 // массив для хранения широты в градусах, минутах и секундах
-char latitudeBase60[16];
+char latitudeBase60[MAX_SIZE_MASS];
 // массив для хранения долготы в градусах, минутах и секундах
-char longitudeBase60[16];
+char longitudeBase60[MAX_SIZE_MASS];
 
 void setup()
 { 
@@ -36,8 +37,8 @@ void loop()
       // 1. в градусах, минутах и секундах
       // 2. градусах в виде десятичной дроби
       Serial.println("GPS Coordinates: ");
-      gps.getLatitudeBase60(latitudeBase60);
-      gps.getLongitudeBase60(longitudeBase60);
+      gps.getLatitudeBase60(latitudeBase60, MAX_SIZE_MASS);
+      gps.getLongitudeBase60(longitudeBase60, MAX_SIZE_MASS);
       Serial.print("Latitude\t");
       Serial.print(latitudeBase60);
       Serial.print("\t\t");
@@ -57,8 +58,8 @@ void loop()
       Serial.println(gps.getAltitude());
       // выводим текущее время
       Serial.print("Time: ");
-      gps.getTime(time);
-      gps.getDate(date);
+      gps.getTime(time, MAX_SIZE_MASS);
+      gps.getDate(date, MAX_SIZE_MASS);
       Serial.write(time);
       Serial.println();
       // выводим текущую дату
