@@ -9,6 +9,8 @@
 #define GPS_ERROR_DATA   -1
 #define GPS_ERROR_SAT    -2
 
+#define GPS_BUFFER        512
+
 #define KNOT_TO_KM        1.852
 class GPS
 {

@@ -166,7 +166,7 @@ bool GPS::readData(char* gpsConnectSat, char* time, char* date, char* latitude, 
     int j = 0;
     char *strGNGGA;
     char *strGNRMC;
-    char gpsBuffer[1023];
+    char gpsBuffer[GPS_BUFFER];
     uartDeviceFlushSerial();
     uartDeviceCleanBuffer(gpsBuffer, sizeof(gpsBuffer));
     uartDeviceReadBuffer(gpsBuffer, sizeof(gpsBuffer), DEFAULT_TIMEOUT);
