@@ -1,6 +1,6 @@
 #include "uartDevice.h"
 
-Stream* serialUartDevice;// = NULL;
+Stream* serialUartDevice;
 
 void  uartDeviceInit(void* uartDevice) {
     serialUartDevice = (Stream*)uartDevice;
@@ -10,12 +10,11 @@ int uartDeviceAvailable() {
     return serialUartDevice->available();
 }
 
-int uartDeviceWaitAvailable (int waitTime) {
+int uartDeviceAvailable (int waitTime) {
     unsigned long timerStart;
     int dataLen = 0;
     timerStart = millis();
     while((unsigned long) (millis() - timerStart) > waitTime) {
-//        delay(500);
         dataLen = uartDeviceAvailable();
         if(dataLen > 0) {
             break;

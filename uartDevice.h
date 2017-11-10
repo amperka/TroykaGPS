@@ -12,7 +12,7 @@ enum dataType {
 
 void  uartDeviceInit(void* uartDevice);
 int   uartDeviceAvailable();
-int   uartDeviceWaitAvailable(int waitTime);
+int   uartDeviceAvailable(int waitTime);
 void  uartDeviceFlushSerial();
 int   uartDeviceReadSerial();
 void  uartDeviceReadBuffer(char* buffer,int count,  unsigned int timeout = DEFAULT_TIMEOUT, unsigned int charTimeout = DEFAULT_INTERCHAR_TIMEOUT);

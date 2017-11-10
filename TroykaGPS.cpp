@@ -1,33 +1,101 @@
 #include <stdio.h>
 #include "TroykaGPS.h"
 
-GPS::GPS(Stream& serial)
-{
+enum { ZERO, ONE, TWO, THREE, FOUR, FIVE, FIND, COPY, SAVE };
+
+GPS::GPS(Stream& serial) {
   uartDeviceInit(&serial);
 }
 
-int8_t GPS::getData() {
+int GPS::available() {
+    return uartDeviceAvailable();
+}
+
+int GPS::available(int time) {
+    return uartDeviceAvailable(time);
+}
+
+int GPS::read() {
+    return uartDeviceReadSerial();
+}
+
+int GPS::readParsing() {
+    // $GNGGA,165708.000,5544.648951,N,03739.472758,E,2,5,4.62,143.098,M,14.426,M,,*49
+    // $GNRMC,165708.000,A,5544.648951,N,03739.472758,E,4.00,63.20,070717,,,D*4F
     int i = 0;
     int j = 0;
     int t = 0;
-    char gpsConnectSat[4];
+    char gpsBuffer[SIZE_GPS_BUFFER];
+    char connectSat[4];
+    char speed[8];
+    char altitude[8];
+    char sat[8];
     char time[16];
     char date[16];
     char latitude[16];
     char longitude[16];
     char parsingLatitude[16];
     char parsingLongitude[16];    
-    char speed[8];
-    char altitude[8];
-    char sat[8];
+    _findGNGGA = ZERO;
+    _findGNRMC = ZERO;
+    // пока не считали полностью две искомые строки данных
+    while (_findGNGGA != SAVE || _findGNRMC != SAVE) {
+        // если идут данные с gps-модуля
+        if (uartDeviceAvailable()) {
+            // считываем один символ
+            char c = uartDeviceReadSerial();
+            // если была найдена искомая строка «$GNGGA»
+            // переходим в режим копирования
+            if (_findGNGGA == FIND) {
+                uartDeviceCleanBuffer(gpsBuffer, sizeof(gpsBuffer));
+                strcat(gpsBuffer, "$GNGGA");
+                i = strlen(gpsBuffer);
+                _findGNGGA = COPY;
+            }
+            // если была найдена искомая строка «$GNRMC»
+            // переходим в режим копирования
+            if (_findGNRMC == FIND) {
+                uartDeviceCleanBuffer(gpsBuffer, sizeof(gpsBuffer));
+                strcat(gpsBuffer, "$GNRMC");
+                i = strlen(gpsBuffer);
+                _findGNRMC = COPY;
+            }
 
-    // проверка и чтение данных с gps-модуля
-    if (!readData(gpsConnectSat, time, date, latitude, longitude, speed, altitude, sat)){
-        return GPS_ERROR_DATA;
+            // если в режиме копирования строки «GNGGA»
+            if (_findGNGGA == COPY) {
+                if (c != '\n') {
+                    gpsBuffer[i++] = c;
+                } else {
+                    gpsBuffer[i] = '\0';
+                    parsingGNGGA(gpsBuffer, sat, altitude);
+                    uartDeviceCleanBuffer(gpsBuffer, sizeof(gpsBuffer));
+                    _findGNGGA = SAVE;
+                }
+            }
+
+            // если в режиме копирования строки «GNRMC»
+            if (_findGNRMC == COPY) {
+                if (c != '\n') {
+                    gpsBuffer[i++] = c;
+                } else {
+                    gpsBuffer[i] = '\0';
+                    parsingGNRMC(gpsBuffer, connectSat, time, date, latitude, longitude, speed);
+                    uartDeviceCleanBuffer(gpsBuffer, sizeof(gpsBuffer));
+                    _findGNRMC = SAVE;
+                }
+            }
+
+            setHeaderState(c, &_findGNGGA, "$GNGGA");
+            setHeaderState(c, &_findGNRMC, "$GNRMC");
+			//Serial.print(c);
+        }
     }
+
+
     // есть ли связь со спутниками
-    if (gpsConnectSat[0] != 'A') {
-        return GPS_ERROR_SAT;
+    if (connectSat[0] != 'A') {
+        _gpsState = GPS_ERROR_SAT;
+        return _gpsState;
     }
 
     // запись данных времени в виде массива символов
@@ -155,144 +223,40 @@ int8_t GPS::getData() {
     _longitudeBase60[t++] = '"';
     _longitudeBase60[t++] = longitude[strlen(longitude) - 1];
     _longitudeBase60[t] = '\0';
-
-    return GPS_OK;
+    
+    _gpsState = GPS_OK;
+    return _gpsState;
 }
 
-bool GPS::readData(char* gpsConnectSat, char* time, char* date, char* latitude, char* longitude, char* speed, char* altitude, char* sat) {
-    // $GNGGA,165708.000,5544.648951,N,03739.472758,E,2,5,4.62,143.098,M,14.426,M,,*49
-    // $GNRMC,165708.000,A,5544.648951,N,03739.472758,E,4.00,63.20,070717,,,D*4F
+void GPS::parsingGNGGA(char* gpsBuffer, char* sat, char* altitude) {
     int i = 0;
     int j = 0;
-    char *strGNGGA;
-    char *strGNRMC;
-    char gpsBuffer[GPS_BUFFER];
-    uartDeviceFlushSerial();
-    uartDeviceCleanBuffer(gpsBuffer, sizeof(gpsBuffer));
-    uartDeviceReadBuffer(gpsBuffer, sizeof(gpsBuffer), DEFAULT_TIMEOUT);
-//    Serial.write(gpsBuffer, sizeof(gpsBuffer));
-//    Serial.println();
-
-    strGNRMC = strstr(gpsBuffer,"$GNRMC");
-
-    if (strlen(strGNRMC) < 100) {
-        return false;
-    }
-    if (strGNRMC[i] == '$') {
-        i++;
-        while (strGNRMC[i] != ',') {
-            i++;
-        }
-    }
-
-    if (strGNRMC[i] == ',') {
-        i++;
-        j = 0;
-        while (strGNRMC[i] != '.') {
-            time[j++] = strGNRMC[i++];
-        }
-        i++;
-        time[j] = '\0';
-        while (strGNRMC[i] != ',') {
-            i++;
-        }
-    }
-    // состояние GPS
-    if (strGNRMC[i] == ',') {
-        i++;
-        gpsConnectSat[0] = strGNRMC[i];
-        i++;
-    }
-
-    // запись данных широты
-    if (strGNRMC[i] == ',') {
-        i++;
-        j = 0;
-        while (strGNRMC[i] != ',') {
-            latitude[j++] = strGNRMC[i++];
-        }
-        i++;
-        while (strGNRMC[i] != ',') {
-            latitude[j++] = strGNRMC[i++];
-        }
-        latitude[j] = '\0';  	
-    }
-
-    // запись данных долготы
-    if (strGNRMC[i] == ',') {
-        i++;
-        j = 0;
-        while (strGNRMC[i] != ',') {
-            longitude[j++] = strGNRMC[i++];
-        }
-        i++;
-        while (strGNRMC[i] != ',') {
-            longitude[j++] = strGNRMC[i++];
-        }
-        longitude[j] = '\0';
-    }
-
-    // запись данных скорости
-    if (strGNRMC[i] == ',') {
-        i++;
-        j = 0;
-        while (strGNRMC[i] != ',') {
-        speed[j++] = strGNRMC[i++];
-        }
-        speed[j] = '\0';
-    }
-
-    // пропуск данных высоты
-    if (strGNRMC[i] == ',') {
-        i++;
-        j = 0;
-        while (strGNRMC[i] != ',') {
-            i++;
-        }
-    }
-
-    // запись даты
-    if (strGNRMC[i] == ',') {
-        i++;
-        j = 0;
-        while (strGNRMC[i] != ',') {
-            date[j++] = strGNRMC[i++];
-        }
-        date[j] = '\0';
-    }
-
-    // поиск сообщения
-    strGNGGA = strstr(gpsBuffer,"$GNGGA");
-    if (strlen(strGNGGA) < 100) {
-        return false;
-    }
-    i = 0;
     // пропуск типа сообщения
-    if (strGNGGA[i] == '$') {
+    if (gpsBuffer[i] == '$') {
         i++;
-        while (strGNGGA[i] != ',') {
+        while (gpsBuffer[i] != ',') {
             i++;
         }
     }
 
     // пропуск записи данных о времени
-    if (strGNGGA[i] == ',') {
+    if (gpsBuffer[i] == ',') {
         i++;
         j = 0;
-        while (strGNGGA[i] != '.') {
+        while (gpsBuffer[i] != '.') {
             i++;
         }
         i++;
-        while (strGNGGA[i] != ',') {
+        while (gpsBuffer[i] != ',') {
             i++;
         }
     }
 
     // пропуск данных широты
-    if (strGNGGA[i] == ',') {
+    if (gpsBuffer[i] == ',') {
         i++;
         j = 0;
-        while (strGNGGA[i] != ',') {
+        while (gpsBuffer[i] != ',') {
             i++;
         }   
     }
@@ -300,10 +264,10 @@ bool GPS::readData(char* gpsConnectSat, char* time, char* date, char* latitude, 
     i = i + 2;
 
     // пропуск данных долготы
-    if (strGNGGA[i] == ',') {
+    if (gpsBuffer[i] == ',') {
         i++;
         j = 0;
-        while (strGNGGA[i] != ',') {
+        while (gpsBuffer[i] != ',') {
             i++;
         }
     }
@@ -314,33 +278,141 @@ bool GPS::readData(char* gpsConnectSat, char* time, char* date, char* latitude, 
     i = i + 2;
 
     // запись данных кол-ва спутников
-    if (strGNGGA[i] == ',') {
+    if (gpsBuffer[i] == ',') {
         i++;
         j = 0;
-        while (strGNGGA[i] != ',') {
-            sat[j++] = strGNGGA[i++];
+        while (gpsBuffer[i] != ',') {
+            sat[j++] = gpsBuffer[i++];
         }
         sat[j] = '\0';
     }
 
     // пропуск геометрического фактора
-    if (strGNGGA[i] == ',') {
+    if (gpsBuffer[i] == ',') {
         i++;
         j = 0;
-        while (strGNGGA[i] != ',') {
+        while (gpsBuffer[i] != ',') {
             i++;
         }   
     }
     // запись данных высоты
-    if (strGNGGA[i] == ',') {
+    if (gpsBuffer[i] == ',') {
         i++;
         j = 0;
-        while (strGNGGA[i] != ',') {
-            altitude[j++] = strGNGGA[i++];
+        while (gpsBuffer[i] != ',') {
+            altitude[j++] = gpsBuffer[i++];
         }
         altitude[j] = '\0';
     }
-    return true;
+}
+
+void GPS::parsingGNRMC(char* gpsBuffer, char* connectSat, char* time, char* date, char* latitude, char* longitude, char* speed) {
+
+    int i = 0;
+    int j = 0;
+
+    if (gpsBuffer[i] == '$') {
+        i++;
+        while (gpsBuffer[i] != ',') {
+            i++;
+        }
+    }
+
+    if (gpsBuffer[i] == ',') {
+        i++;
+        j = 0;
+        while (gpsBuffer[i] != '.') {
+            time[j++] = gpsBuffer[i++];
+        }
+        i++;
+        time[j] = '\0';
+        while (gpsBuffer[i] != ',') {
+            i++;
+        }
+    }
+    // состояние GPS
+    if (gpsBuffer[i] == ',') {
+        i++;
+        connectSat[0] = gpsBuffer[i];
+        i++;
+    }
+
+    // запись данных широты
+    if (gpsBuffer[i] == ',') {
+        i++;
+        j = 0;
+        while (gpsBuffer[i] != ',') {
+            latitude[j++] = gpsBuffer[i++];
+        }
+        i++;
+        while (gpsBuffer[i] != ',') {
+            latitude[j++] = gpsBuffer[i++];
+        }
+        latitude[j] = '\0';     
+    }
+
+    // запись данных долготы
+    if (gpsBuffer[i] == ',') {
+        i++;
+        j = 0;
+        while (gpsBuffer[i] != ',') {
+            longitude[j++] = gpsBuffer[i++];
+        }
+        i++;
+        while (gpsBuffer[i] != ',') {
+            longitude[j++] = gpsBuffer[i++];
+        }
+        longitude[j] = '\0';
+    }
+
+    // запись данных скорости
+    if (gpsBuffer[i] == ',') {
+        i++;
+        j = 0;
+        while (gpsBuffer[i] != ',') {
+        speed[j++] = gpsBuffer[i++];
+        }
+        speed[j] = '\0';
+    }
+
+    // пропуск данных высоты
+    if (gpsBuffer[i] == ',') {
+        i++;
+        j = 0;
+        while (gpsBuffer[i] != ',') {
+            i++;
+        }
+    }
+
+    // запись даты
+    if (gpsBuffer[i] == ',') {
+        i++;
+        j = 0;
+        while (gpsBuffer[i] != ',') {
+            date[j++] = gpsBuffer[i++];
+        }
+        date[j] = '\0';
+    }
+}
+
+void GPS::setHeaderState(char c, int8_t* state, char* header) {
+    if (*state != FIND && *state != COPY && *state != SAVE) {
+        if (*state == ZERO && c == header[ZERO]) {
+            *state = ONE;
+        } else if (*state == ONE && c == header[ONE]) {
+            *state = TWO;
+        } else if (*state == TWO && c == header[TWO]) {
+            *state = THREE;
+        } else if (*state == THREE && c == header[THREE]) {
+            *state = FOUR;
+        } else if (*state == FOUR && c == header[FOUR]) {
+            *state = FIVE;
+        } else if (*state == FIVE && c == header[FIVE]) {
+            *state = FIND;
+        } else {
+            *state = ZERO;
+        }
+    }
 }
 
 void GPS::getLatitudeBase60(char* latitudeBase60, size_t maxLength) const {
@@ -357,16 +429,4 @@ void GPS::getTime(char* time, size_t maxLength) const {
 
 void GPS::getDate(char* date, size_t maxLength) const {
     strncpy(date, _date, maxLength);
-}
-
-int GPS::available() {
-    return uartDeviceAvailable();
-}
-
-int GPS::waitAvailable(int time) {
-    return uartDeviceWaitAvailable(time);
-}
-
-int GPS::read() {
-    return uartDeviceReadSerial();
 }

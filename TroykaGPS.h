@@ -5,19 +5,24 @@
 #include "Print.h"
 #include "Stream.h"
 
-#define GPS_OK            0
-#define GPS_ERROR_DATA   -1
-#define GPS_ERROR_SAT    -2
+#define GPS_OK              1
+#define GPS_ERROR_DATA      2
+#define GPS_ERROR_SAT       3
 
-#define GPS_BUFFER        512
+#define SIZE_GPS_BUFFER     96
 
-#define KNOT_TO_KM        1.852
+#define KNOT_TO_KM          1.852
+
 class GPS
 {
 
 public:
     GPS(Stream& serial);
-    int8_t getData();
+    int available();
+    int available(int time);
+    int read();
+    int readParsing();
+    int8_t getState() const { return _gpsState; }
     int8_t getSat() const { return _sat; }
     float getSpeedKn() const { return _speed; }
     float getSpeedKm() const { return _speed * KNOT_TO_KM; }
@@ -36,11 +41,11 @@ public:
     uint16_t getYear() const { return _year; }
 
  private:
-    int available();
-    int waitAvailable(int time);
-    int read();
-    bool readData(char* gpsConnectSat, char* time, char* date, char* latitude, char* longitude, char* speed, char* altitude, char* sat);
-    bool _gpsConnectSat;
+    void setHeaderState(char c, int8_t* state, char* header);
+    void parsingGNGGA(char* gpsBuffer, char* sat, char* altitude);
+    void parsingGNRMC(char* gpsBuffer, char* connectSat, char* time, char* date, char* latitude, char* longitude, char* speed);
+    bool _connectSat;
+    int8_t _gpsState;
  	int8_t _sat;
  	int8_t _second;
     int8_t _minute;
@@ -56,5 +61,7 @@ public:
     char _longitudeBase60[16];
     char _time[16];
     char _date[16];
+    int8_t _findGNGGA;
+    int8_t _findGNRMC;
 };
 #endif
