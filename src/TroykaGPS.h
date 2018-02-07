@@ -50,8 +50,8 @@ public:
     void parsingGNRMC(char* gpsBuffer, char* connectSat, char* time, char* date, char* latitude, char* longitude, char* speed);
     bool _connectSat;
     int8_t _gpsState;
- 	int8_t _sat;
- 	int8_t _second;
+    int8_t _sat;
+    int8_t _second;
     int8_t _minute;
     int8_t _hour;
     int8_t _day;
