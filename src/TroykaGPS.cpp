@@ -3,7 +3,7 @@
 
 enum { ZERO, ONE, TWO, THREE, FOUR, FIVE, FIND, COPY, SAVE };
 
-GPS::GPS(Stream& serial) {
+GPS::GPS(Stream &serial) {
   uartDeviceInit(&serial);
 }
 
@@ -38,6 +38,8 @@ int GPS::readParsing() {
     char parsingLongitude[16];    
     _findGNGGA = ZERO;
     _findGNRMC = ZERO;
+    // очищаем буффер GPS-модуля
+    uartDeviceFlushSerial();
     // пока не считали полностью две искомые строки данных
     while (_findGNGGA != SAVE || _findGNRMC != SAVE) {
         // если идут данные с gps-модуля

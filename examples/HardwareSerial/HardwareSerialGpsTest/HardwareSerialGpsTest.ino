@@ -1,13 +1,18 @@
 // библиотека для работы с GPS устройством
 #include <TroykaGPS.h>
+
+// serial-порт к которому подключён GPS-модуль
+#define GPS_SERIAL    Serial1
+
 // создаём объект класса GPS и передаём в него объект Serial1 
-GPS gps(Serial1);
+GPS gps(GPS_SERIAL);
+
 // задаём размер массива для времени, даты, широты и долготы
 #define MAX_SIZE_MASS 16
 // массив для хранения текущего времени
-char time[MAX_SIZE_MASS];
+char strTime[MAX_SIZE_MASS];
 // массив для хранения текущей даты
-char date[MAX_SIZE_MASS];
+char strDate[MAX_SIZE_MASS];
 // массив для хранения широты в градусах, минутах и секундах
 char latitudeBase60[MAX_SIZE_MASS];
 // массив для хранения долготы в градусах, минутах и секундах
@@ -16,6 +21,7 @@ char longitudeBase60[MAX_SIZE_MASS];
 void setup()
 { 
   // открываем последовательный порт для мониторинга действий в программе
+  // и передаём скорость 115200 бод
   Serial.begin(115200);
   // ждём, пока не откроется монитор последовательного порта
   // для того, чтобы отследить все события в программе
@@ -23,12 +29,12 @@ void setup()
   }
   Serial.print("Serial init OK\r\n");
   // открываем Serial-соединение с GPS-модулем
-  Serial1.begin(115200);
+  GPS_SERIAL.begin(115200);
 }
  
 void loop()
 {
-  // если пришли данные с gps-модуля
+  // если пришли данные с GPS-модуля
   if (gps.available()) {
     // считываем данные и парсим
     gps.readParsing();
@@ -62,13 +68,13 @@ void loop()
         Serial.println(gps.getAltitude());
         // выводим текущее время
         Serial.print("Time: ");
-        gps.getTime(time, MAX_SIZE_MASS);
-        gps.getDate(date, MAX_SIZE_MASS);
-        Serial.write(time);
+        gps.getTime(strTime, MAX_SIZE_MASS);
+        gps.getDate(strDate, MAX_SIZE_MASS);
+        Serial.write(strTime);
         Serial.println();
         // выводим текущую дату
         Serial.print("Date: ");
-        Serial.write(date);
+        Serial.write(strDate);
         Serial.println("\r\n");
         // каждую переменную дату и времени можно выводить отдельно
   /*    Serial.print(gps.getHour());

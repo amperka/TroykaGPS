@@ -2,8 +2,10 @@
 #define __UART_DEVICE_H__
 #include <Arduino.h>
 
-#define DEFAULT_TIMEOUT     		1000   // miliseconds
-#define DEFAULT_INTERCHAR_TIMEOUT	1000   // miliseconds
+// miliseconds
+#define DEFAULT_TIMEOUT     		1000
+// miliseconds
+#define DEFAULT_INTERCHAR_TIMEOUT	1000
 
 enum dataType {
     CMD     = 0,

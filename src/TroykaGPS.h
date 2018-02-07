@@ -1,9 +1,13 @@
-#ifndef __AMPERKA_GPRS_H__
-#define __AMPERKA_GPRS_H__
+#ifndef __AMPERKA_GPS_H__
+#define __AMPERKA_GPS_H__
 
-#include "uartDevice.h"
+#include "./utility/uartDevice.h"
 #include "Print.h"
 #include "Stream.h"
+
+#if defined (__SAM3X8E__) || defined(__SAM3A8C__) || defined(__SAM3A4C__) || defined(__SAMD21G18A__)
+#include <avr/dtostrf.h>
+#endif
 
 #define GPS_OK              1
 #define GPS_ERROR_DATA      2
@@ -17,7 +21,7 @@ class GPS
 {
 
 public:
-    GPS(Stream& serial);
+    GPS(Stream &serial);
     int available();
     int available(int time);
     int read();
