@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include "TroykaGPS.h"
 
+using namespace GPSNAME;
+
 enum { ZERO, ONE, TWO, THREE, FOUR, FIVE, FIND, COPY, SAVE };
 
-GPS::GPS(Stream &serial) {
-  uartDeviceInit(&serial);
+GPS::GPS(Stream &serial) : UARTDevice(&serial) {
+
 }
 
 int GPS::available() {

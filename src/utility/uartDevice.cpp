@@ -1,16 +1,19 @@
 #include "uartDevice.h"
 
-Stream* serialUartDevice;
+using namespace GPSNAME;
 
-void  uartDeviceInit(void* uartDevice) {
-    serialUartDevice = (Stream*)uartDevice;
+UARTDevice::UARTDevice(Stream* uartDevice) {
+    _uartDevice = uartDevice;
 }
 
-int uartDeviceAvailable() {
-    return serialUartDevice->available();
+UARTDevice::~UARTDevice() {
 }
 
-int uartDeviceAvailable (int waitTime) {
+int UARTDevice::uartDeviceAvailable() {
+    return _uartDevice -> available();
+}
+
+int UARTDevice::uartDeviceAvailable (int waitTime) {
     unsigned long timerStart;
     int dataLen = 0;
     timerStart = millis();
@@ -23,24 +26,24 @@ int uartDeviceAvailable (int waitTime) {
     return dataLen;
 }
 
-void uartDeviceFlushSerial() {
+void UARTDevice::uartDeviceFlushSerial() {
     while (uartDeviceAvailable()) {
-        char c = serialUartDevice -> read();
+        char c = _uartDevice -> read();
     }
 }
 
-int uartDeviceReadSerial() {
-    return serialUartDevice -> read();
+int UARTDevice::uartDeviceReadSerial() {
+    return _uartDevice -> read();
 }
 
-void uartDeviceReadBuffer(char* buffer, int count, unsigned int timeout, unsigned int charTimeout) {
+void UARTDevice::uartDeviceReadBuffer(char* buffer, int count, unsigned int timeout, unsigned int charTimeout) {
     int i = 0;
     unsigned long timerStart, prevChar;
     timerStart = millis();
     prevChar = 0;
     while(1) {
         while (uartDeviceAvailable()) {
-            char c = serialUartDevice -> read();
+            char c = _uartDevice -> read();
             prevChar = millis();
             buffer[i++] = c;
             if(i >= count)
@@ -58,27 +61,27 @@ void uartDeviceReadBuffer(char* buffer, int count, unsigned int timeout, unsigne
     }
 }
 
-void uartDeviceCleanBuffer(char* buffer, int count) {
+void UARTDevice::uartDeviceCleanBuffer(char* buffer, int count) {
     for(int i = 0; i < count; i++) {
         buffer[i] = '\0';
     }
 }
 
-void uartDeviceSendByte(uint8_t data) {
-	serialUartDevice->write(data);
+void UARTDevice::uartDeviceSendByte(uint8_t data) {
+	_uartDevice->write(data);
 }
 
-void uartDeviceSendChar(const char c) {
-	serialUartDevice->write(c);
+void UARTDevice::uartDeviceSendChar(const char c) {
+	_uartDevice->write(c);
 }
 
-void uartDeviceSendCMD(const char* cmd) {
+void UARTDevice::uartDeviceSendCMD(const char* cmd) {
     for(int i = 0; i < strlen(cmd); i++) {
         uartDeviceSendByte(cmd[i]);
     }
 }
 
-void uartDeviceSendCMD(const __FlashStringHelper* cmd) {
+void UARTDevice::uartDeviceSendCMD(const __FlashStringHelper* cmd) {
     int i = 0;
     const char *ptr = (const char *) cmd;
     while (pgm_read_byte(ptr + i) != 0x00) {
@@ -86,21 +89,21 @@ void uartDeviceSendCMD(const __FlashStringHelper* cmd) {
     }
 }
 
-void uartDeviceSendCMDP(const char* cmd) {
+void UARTDevice::uartDeviceSendCMDP(const char* cmd) {
     // pgm_read_byte(address_short) - Read a byte from the program space with a 16-bit (near) address
     while (pgm_read_byte(cmd) != 0x00)
     uartDeviceSendByte(pgm_read_byte(cmd++));  
 }
 
-void uartDeviceSendAT(void) {
+void UARTDevice::uartDeviceSendAT() {
     uartDeviceCheckWithCMD(F("AT\r\n"),"OK", CMD);
 }
 
-void uartDeviceSendEndMark(void) {
+void UARTDevice::uartDeviceSendEndMark() {
     uartDeviceSendByte((char)26);
 }
 
-bool uartDeviceWaitForResp(const char* resp, dataType type, unsigned int timeout, unsigned int charTimeout) {
+bool UARTDevice::uartDeviceWaitForResp(const char* resp, dataType type, unsigned int timeout, unsigned int charTimeout) {
     int len = strlen(resp);
     int sum = 0;
     // prevChar is the time when the previous Char has been read
@@ -109,7 +112,7 @@ bool uartDeviceWaitForResp(const char* resp, dataType type, unsigned int timeout
     prevChar = 0;
     while(1) {
         if (uartDeviceAvailable()) {
-            char c = serialUartDevice -> read();
+            char c = _uartDevice -> read();
             prevChar = millis();
             sum = (c == resp[sum]) ? sum + 1 : 0;
             if (sum == len) {
@@ -132,13 +135,14 @@ bool uartDeviceWaitForResp(const char* resp, dataType type, unsigned int timeout
 }
 
 
-bool uartDeviceCheckWithCMD(const char* cmd, const char *resp, dataType type, unsigned int timeout, unsigned int charTimeout) {
+bool UARTDevice::uartDeviceCheckWithCMD(const char* cmd, const char *resp, dataType type, unsigned int timeout, unsigned int charTimeout) {
     uartDeviceSendCMD(cmd);
     return uartDeviceWaitForResp(resp, type, timeout, charTimeout);
 }
 
 // HACERR que tambien la respuesta pueda ser FLASH STRING
-bool uartDeviceCheckWithCMD(const __FlashStringHelper* cmd, const char *resp, dataType type, unsigned int timeout, unsigned int charTimeout) {
+bool UARTDevice::uartDeviceCheckWithCMD(const __FlashStringHelper* cmd, const char *resp, dataType type, unsigned int timeout, unsigned int charTimeout) {
     uartDeviceSendCMD(cmd);
     return uartDeviceWaitForResp(resp, type, timeout, charTimeout);
 }
+

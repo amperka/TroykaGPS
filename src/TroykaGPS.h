@@ -17,9 +17,8 @@
 
 #define KNOT_TO_KM          1.852
 
-class GPS
+class GPS : public GPSNAME::UARTDevice
 {
-
 public:
     GPS(Stream &serial);
     int available();
@@ -68,4 +67,5 @@ public:
     int8_t _findGNGGA;
     int8_t _findGNRMC;
 };
+
 #endif
