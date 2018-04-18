@@ -1,7 +1,9 @@
 GPS/GLONASS (Troyka-модуль)
 ===========================
 
-Библиотека для Arduino, позволяющая считывать данные с [GPS/GLONASS](http://amperka.ru/product/troyka-gps-glonass) модуля.
+Библиотека для Arduino, позволяющая считывать данные с GPS/GLONASS модулей:
+* [GPS/GLONASS модуль со встроенной антенной.](http://amperka.ru/product/troyka-gps-glonass)
+* [GPS/GLONASS модуль с выносной антенной.](http://amperka.ru/product/troyka-gps-glonass-extended-reciver)
 
 Установка библиотеки
 ====================
