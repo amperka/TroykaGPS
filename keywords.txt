@@ -6,7 +6,7 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-GPS 	KEYWORD1	GPS
+GPS 	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
