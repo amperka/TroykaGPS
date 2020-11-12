@@ -97,9 +97,9 @@ void loop() {
         case GPS_ERROR_DATA:
             Serial.println("GPS error data");
             break;
-        // нет соединение со спутниками
+        // нет соединения со спутниками
         case GPS_ERROR_SAT:
-            Serial.println("GPS no connect to satellites!!!");
+            Serial.println("GPS is not connected to satellites!!!");
             break;
         }
     }
