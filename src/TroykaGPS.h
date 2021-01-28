@@ -44,7 +44,7 @@ public:
     uint16_t getYear() const { return _year; }
 
 private:
-    void setHeaderState(char c, int8_t* state, char* header);
+    void setHeaderState(char c, int8_t* state, const char* header);
     void parsingGNGGA(char* gpsBuffer, char* sat, char* altitude);
     void parsingGNRMC(char* gpsBuffer, char* connectSat, char* time, char* date, char* latitude, char* longitude, char* speed);
     bool _connectSat;

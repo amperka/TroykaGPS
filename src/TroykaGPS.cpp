@@ -399,7 +399,7 @@ void GPS::parsingGNRMC(char* gpsBuffer, char* connectSat, char* time, char* date
     }
 }
 
-void GPS::setHeaderState(char c, int8_t* state, char* header) {
+void GPS::setHeaderState(char c, int8_t* state, const char* header) {
     if (*state != FIND && *state != COPY && *state != SAVE) {
         if (*state == ZERO && c == header[ZERO]) {
             *state = ONE;
